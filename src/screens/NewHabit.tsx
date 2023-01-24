@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { ScrollView, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons'
 import colors from 'tailwindcss/colors';
 
 import { BackButton } from '../components/BackButton';
 import { Checkbox } from '../components/Checkbox';
+import { api } from '../lib/axios';
 
 const availableWeekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export function NewHabit() {
+  const [title, setTitle] = useState('')
   const [weekDays, setWeekDays] = useState<number[]>([])
 
   function handleToggleWeekDay(weekDayIndex: number) {
@@ -16,6 +18,25 @@ export function NewHabit() {
       setWeekDays(prevState => prevState.filter(weekDay => weekDay !== weekDayIndex))
     } else {
       setWeekDays(prevState => [...prevState, weekDayIndex])
+    }
+  }
+
+  async function handleCreateNewHabit(){
+    try {
+      if (!title.trim() || weekDays.length === 0) {
+        Alert.alert('New Habit', 'Please inform title and chose the recurrence!')
+      }
+
+      await api.post('/habits', { title, weekDays})
+
+      setTitle('')
+      setWeekDays([])
+
+      Alert.alert('New Habit Created')
+
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Error', 'Failed to create new Habit')
     }
   }
 
@@ -33,9 +54,11 @@ export function NewHabit() {
           what is your commitment?
         </Text>
         <TextInput
+          className='h-12 pl-4 rounded-lg mt-3 bg-zinc-900 text-white border-2 border-zinc-800 focus:border-2 focus:border-green-400'
           placeholder='ex.: Exercise, drink water, etc...'
           placeholderTextColor={colors.zinc[400]}
-          className='h-12 pl-4 rounded-lg mt-3 bg-zinc-900 text-white border-2 border-zinc-800 focus:border-2 focus:border-green-400 '
+          onChangeText={setTitle}
+          value={title}
         />
         <Text className='mt-4 mb-3 text-white font-semibold text-base'>
           What is the recurrence?
@@ -53,6 +76,7 @@ export function NewHabit() {
         <TouchableOpacity
           className='w-full h-14 flex-row items-center justify-center bg-green-600 rounded-md mt-6'
           activeOpacity={0.7}
+          onPress={handleCreateNewHabit}
         >
           <Feather
             name='check'
